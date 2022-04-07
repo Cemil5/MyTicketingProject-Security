@@ -13,7 +13,7 @@ jobs:
 
   build:
     docker:
-      - image: cimg/openjdk:11-jdk
+      image: cimg/openjdk:11-jdk
 #        auth:
 #          username: mydockerhub-user
 #          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
