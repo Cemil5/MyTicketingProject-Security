@@ -43,9 +43,9 @@ jobs:
   docker-image-and-publish:
     machine: true
     steps:
-      attach_workspace:
+      - attach_workspace:
         at: /tmp/workspace
-      run:
+      - run:
         ls -a /tmp/workspace
         name: Create Docker image and push to Docker hub
         command: docker login -u $DOCKER_LOGIN --password $DOCKER_PWD && docker build -t 589866/my-ticketing-application /tmp/workspace/ && docker push 589866/my-ticketing-application
