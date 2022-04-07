@@ -4,6 +4,7 @@ import com.cydeo.dto.UserDTO;
 import com.cydeo.exception.TicketingProjectException;
 import com.cydeo.service.RoleService;
 import com.cydeo.service.UserService;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,11 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/user")
+@AllArgsConstructor
 public class UserController {
 
-    @Autowired
     RoleService roleService;
-    @Autowired
     UserService userService;
 
     @GetMapping({"/create", "/add", "/initialize"})
@@ -30,7 +30,7 @@ public class UserController {
      //   System.out.println("controller : " + roleService.listAllRoles().get(0).getDescription());
         model.addAttribute("users", userService.listAllUsers());
 
-        return "user/create";
+        return "/user/create";
     }
 
 

@@ -27,7 +27,7 @@ public class TaskController {
     @GetMapping("/create")
     public String createTask(Model model){
         model.addAttribute("task", new TaskDTO());
-        model.addAttribute("projects", projectService.listAllProjects());
+        model.addAttribute("projects", projectService.listAllNonCompletedProjects());
         model.addAttribute("employees", userService.listAllByRole("employee"));
         model.addAttribute("tasks", taskService.findAll());
         return "/task/create";
@@ -48,7 +48,7 @@ public class TaskController {
     @GetMapping("update/{id}")
     public String editTask(@PathVariable Long id, Model model){
         model.addAttribute("task", taskService.findById(id));
-        model.addAttribute("projects", projectService.listAllProjects());
+        model.addAttribute("projects", projectService.listAllNonCompletedProjects());
         model.addAttribute("employees", userService.listAllByRole("employee"));
         model.addAttribute("tasks", taskService.findAll());
         return "/task/update";
@@ -76,7 +76,7 @@ public class TaskController {
         model.addAttribute("tasks", dtos);
         model.addAttribute("statuses", Status.values());
         model.addAttribute("users",userService.listAllByRole("employee"));
-        model.addAttribute("projects",projectService.listAllProjects());
+        model.addAttribute("projects",projectService.listAllNonCompletedProjects());
         return "/task/task-update";
     }
 

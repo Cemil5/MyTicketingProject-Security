@@ -3,6 +3,8 @@ package com.cydeo.mapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Type;
+
 @Component
 public class MapperUtil {
 
@@ -21,7 +23,8 @@ public class MapperUtil {
 //    }
 
     public<T>  T convert(Object objectToConverted, T convertedObject){
-        return (T) modelMapper.map(objectToConverted, convertedObject.getClass());
+      //  return (T) modelMapper.map(objectToConverted, convertedObject.getClass());
+        return modelMapper.map(objectToConverted, (Type) convertedObject.getClass());
     }
 
 }
