@@ -1,54 +1,65 @@
 version: 2.0
 
 jobs:
-  test:
-    parallelism: 2
-    docker:
-      - image: cimg/openjdk:17.0.1
-        auth:
-          username: $DOCKER_LOGIN
-          password: $DOCKER_PWD  # context / project UI env-var reference
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "pom.xml" }}
-            - v1-dependencies-
-      - attach_workspace:
-          at: ./target
-      - run: |
-          ./mvnw \
-          -Dtest=$(for file in $(circleci tests glob "src/test/**/**.java" \
-          | circleci tests split --split-by=timings); \
-          do basename $file \
-          | sed -e "s/.java/,/"; \
-          done | tr -d '\r\n') \
-          -e test verify
-      - store_test_results:
-          path: target/surefire-reports
-      - store_artifacts:
-          path: target/site/jacoco/index.html
+#  test:
+#    docker:
+#      - image: cimg/openjdk:17.0.1
+#        auth:
+#          username: mydockerhub-user
+#          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+#    steps:
+#      - checkout
+#      - run: ./mvnw test
+
   build:
     docker:
-      - image: cimg/openjdk:17.0.1
-        auth:
-          username: $DOCKER_LOGIN
-          password: $DOCKER_PWD  # context / project UI env-var reference
+      image: cimg/openjdk:11-jdk
+#        auth:
+#          username: mydockerhub-user
+#          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+#      docker hub working :
+      working_directory: /tmp/workspace
+      environment:
+#        customize the JVM maximum heap limit
+        MAVEN_OPTS: -Xmx3200m
     steps:
       - checkout
+#      - run: ./mvnw -Dmaven.test.skip=true package
+      - run: mkdir -p /tmp/workspace
+#        download and cache dependencies
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "pom.xml" }}
             - v1-dependencies-
-      - run: ./mvnw -Dmaven.test.skip=true package
+      - run: mvn dependency:go-offline
+      - run: mvn clean install -DskipTests
       - save_cache:
           paths:
-            - ~/.m2
+            -~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
       - persist_to_workspace:
-          root: ./
-          paths:
-            - target/
+          root: /tmp/workspace
+          paths: .
+  docker_image_and_publish:
+    machine: true
+    steps:
+      - attach_workspace:
+        at: /tmp/workspace
+      - run: ls -a /tmp/workspace
+      - run:
+          name: Create Docker image and push to Docker hub
+          command: docker login -u $DOCKER_LOGIN --password $DOCKER_PWD && docker build -t 589866/my-ticketing-application /tmp/workspace/ && docker push 589866/my-ticketing-application
+  deploy-job:
+    docker:
+      - image: circleci/node:10.0.0
+    steps:
+      - run:
+          name: Execute Deployment Script
+          command:
+            ssh -o "StrictHostKeyChecking no" ec2-3-80-82-122.compute-1.amazonaws.com <<'ENDSSH' 
+            /bin/bash bin/deploy_image.sh 
+            docker ps
+
 
 workflows:
   version: 2
@@ -56,6 +67,16 @@ workflows:
   build-then-test:
     jobs:
       - build
-      - test:
+      - docker_image_and_publish:
           requires:
             - build
+      - deploy-job:
+          requires:
+            - docker_image_and_publish
+#      - test:
+#          requires:
+#            - build
+
+
+
+# https://circleci.com/docs/2.0/language-java-maven/
